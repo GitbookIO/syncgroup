@@ -64,3 +64,24 @@ func TestRwMutexes(t *testing.T) {
 	// Wait for all to finish
 	wg.Wait()
 }
+
+func TestEmptyParallel(t *testing.T) {
+	N := 100
+	M := 500
+
+	wg := sync.WaitGroup{}
+
+	for i := 0; i < N; i++ {
+		for j := 0; j < M; j++ {
+			wg.Add(1)
+			// Lock, sleep
+			go func() {
+				time.Sleep(1 * time.Millisecond)
+				wg.Done()
+			}()
+		}
+	}
+
+	// Wait for all to finish
+	wg.Wait()
+}
