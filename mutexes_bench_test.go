@@ -40,9 +40,9 @@ func BenchmarkReadGroupLockUnlock(b *testing.B) {
 	}
 }
 
-// BenchmarkGroupMutexes
+// BenchmarkParallelGroup
 // Runs 100 go-routines read locking/unlocing on a single key (at a time)of a group mutex
-func BenchmarkGroupMutexes(b *testing.B) {
+func BenchmarkParallelGroup(b *testing.B) {
 	M := 100
 
 	locks := NewMutexGroup()
@@ -66,9 +66,9 @@ func BenchmarkGroupMutexes(b *testing.B) {
 	}
 }
 
-// BenchmarkEmptyParallel
+// BenchmarkParallelSingle
 // Runs 100 go-routines read locking/unlocing on a single mutex
-func BenchmarkEmptyParallel(b *testing.B) {
+func BenchmarkParallelSingle(b *testing.B) {
 	M := 100
 
 	lock := sync.RWMutex{}
