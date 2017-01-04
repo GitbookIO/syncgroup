@@ -47,10 +47,11 @@ func BenchmarkParallelGroup(b *testing.B) {
 
 	locks := NewMutexGroup()
 	wg := sync.WaitGroup{}
+	keys := nkeys(M)
 
 	for i := 0; i < b.N; i++ {
-		key := strconv.Itoa(i)
 		for j := 0; j < M; j++ {
+			key := keys[j]
 			wg.Add(1)
 			// Lock, sleep
 			go func(key string) {
@@ -73,10 +74,11 @@ func BenchmarkParallelSharded(b *testing.B) {
 
 	locks := NewShardedMutexGroup()
 	wg := sync.WaitGroup{}
+	keys := nkeys(M)
 
 	for i := 0; i < b.N; i++ {
-		key := strconv.Itoa(i)
 		for j := 0; j < M; j++ {
+			key := keys[j]
 			wg.Add(1)
 			// Lock, sleep
 			go func(key string) {
@@ -99,10 +101,11 @@ func BenchmarkParallelSingle(b *testing.B) {
 
 	lock := sync.RWMutex{}
 	wg := sync.WaitGroup{}
+	keys := nkeys(M)
 
 	for i := 0; i < b.N; i++ {
-		key := strconv.Itoa(i)
 		for j := 0; j < M; j++ {
+			key := keys[j]
 			wg.Add(1)
 			// Lock, sleep
 			go func(key string) {
@@ -116,4 +119,14 @@ func BenchmarkParallelSingle(b *testing.B) {
 		// Wait for all to finish
 		wg.Wait()
 	}
+}
+
+func nkeys(n int) []string {
+	strs := make([]string, n)
+
+	for idx, _ := range strs {
+		strs[idx] = strconv.Itoa(idx)
+	}
+
+	return strs
 }
