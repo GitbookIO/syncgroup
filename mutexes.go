@@ -72,23 +72,31 @@ func (mg *MutexGroup) maybeDelete(key string, mutex *rwmutex) bool {
 
 func (mg *MutexGroup) getOrFail(key string) *rwmutex {
 	mg.lock.RLock()
-	defer mg.lock.RUnlock()
+	mutex, ok := mg.mutexes[key]
+	mg.lock.RUnlock()
 	// Get
-	if mutex, ok := mg.mutexes[key]; ok {
+	if ok {
 		return mutex
 	}
 	panic(fmt.Sprintf(`MutexGroup.getOrFail("%s"): Tried to perform an Unlock on a key that was never Locked`, key))
 }
 
 func (mg *MutexGroup) getOrCreate(key string) *rwmutex {
+	// Get
+	mg.lock.RLock()
+	mutex, ok := mg.mutexes[key]
+	mg.lock.RUnlock()
 
-	mg.lock.Lock()
-	defer mg.lock.Unlock()
-
-	// Create if doesn't exist
-	if _, ok := mg.mutexes[key]; !ok {
-		mg.mutexes[key] = &rwmutex{}
+	// Exists, so early exit
+	if ok {
+		return mutex
 	}
 
-	return mg.mutexes[key]
+	// Create
+	mutex = &rwmutex{}
+	mg.lock.Lock()
+	mg.mutexes[key] = mutex
+	mg.lock.Unlock()
+
+	return mutex
 }
