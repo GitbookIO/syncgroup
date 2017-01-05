@@ -8,14 +8,12 @@ import (
 // MutexGroup provides a group of sync.RWMutex, that be locked/unlocked by key
 type MutexGroup struct {
 	lock    *sync.RWMutex
-	active  *ActiveGroup
 	mutexes map[string]*rwmutex
 }
 
 func NewMutexGroup() *MutexGroup {
 	return &MutexGroup{
 		lock:    &sync.RWMutex{},
-		active:  NewActiveGroup(),
 		mutexes: map[string]*rwmutex{},
 	}
 }
@@ -45,7 +43,7 @@ func (mg *MutexGroup) RUnlock(key string) {
 }
 
 func (mg *MutexGroup) Has(key string) bool {
-	return mg.active.Has(key)
+	return false
 }
 
 func (mg *MutexGroup) maybeDelete(key string, mutex *rwmutex) bool {
