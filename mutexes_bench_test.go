@@ -24,6 +24,14 @@ func BenchmarkGroupLockUnlock(b *testing.B) {
 	}
 }
 
+func BenchmarkShardedLockUnlock(b *testing.B) {
+	rw := NewShardedMutexes()
+	for n := 0; n < b.N; n++ {
+		rw.Lock("a")
+		rw.Unlock("a")
+	}
+}
+
 func BenchmarkReadGoLockUnlock(b *testing.B) {
 	rw := sync.RWMutex{}
 	for n := 0; n < b.N; n++ {
@@ -40,10 +48,19 @@ func BenchmarkReadGroupLockUnlock(b *testing.B) {
 	}
 }
 
+func BenchmarkReadShardedLockUnlock(b *testing.B) {
+	rw := NewShardedMutexes()
+	for n := 0; n < b.N; n++ {
+		rw.RLock("a")
+		rw.RUnlock("a")
+	}
+}
+
 // BenchmarkParallelGroup
 // Runs 100 go-routines read locking/unlocing on a single key (at a time)of a group mutex
 func BenchmarkParallelGroup(b *testing.B) {
-	M := 100
+	M := 512
+	b.SetParallelism(M)
 
 	locks := NewMutexGroup()
 	wg := sync.WaitGroup{}
@@ -70,9 +87,10 @@ func BenchmarkParallelGroup(b *testing.B) {
 // BenchmarkParallelSharded
 // Runs 100 go-routines read locking/unlocing on a single key (at a time) of a Sharded mutex
 func BenchmarkParallelSharded(b *testing.B) {
-	M := 100
+	M := 512
+	b.SetParallelism(M)
 
-	locks := NewShardedMutexGroup()
+	locks := NewShardedMutexes()
 	wg := sync.WaitGroup{}
 	keys := nkeys(M)
 
@@ -97,7 +115,8 @@ func BenchmarkParallelSharded(b *testing.B) {
 // BenchmarkParallelSingle
 // Runs 100 go-routines read locking/unlocing on a single mutex
 func BenchmarkParallelSingle(b *testing.B) {
-	M := 100
+	M := 512
+	b.SetParallelism(M)
 
 	lock := sync.RWMutex{}
 	wg := sync.WaitGroup{}
