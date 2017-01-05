@@ -13,22 +13,24 @@ type rwmutex struct {
 }
 
 func (rw *rwmutex) RLock() int64 {
-	rw.RLock()
-	return rw.count.Inc()
+	active := rw.count.Inc()
+	rw.mutex.RLock()
+	return active
 }
 
 func (rw *rwmutex) Lock() int64 {
-	rw.Lock()
-	return rw.count.Inc()
+	count := rw.count.Inc()
+	rw.mutex.Lock()
+	return count
 }
 
 func (rw *rwmutex) RUnlock() int64 {
-	rw.RUnlock()
+	rw.mutex.RUnlock()
 	return rw.count.Dec()
 }
 
 func (rw *rwmutex) Unlock() int64 {
-	rw.Unlock()
+	rw.mutex.Unlock()
 	return rw.count.Dec()
 }
 
