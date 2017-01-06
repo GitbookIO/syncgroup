@@ -42,6 +42,14 @@ func (sg *ShardedMutexes) RUnlock(key string) {
 	sg.getShard(key).RUnlock()
 }
 
+func (sg *ShardedMutexes) Locker(key string) *sync.RWMutex {
+	return sg.getShard(key)
+}
+
+func (sg *ShardedMutexes) RLocker(key string) *sync.RWMutex {
+	return sg.getShard(key)
+}
+
 func (sg *ShardedMutexes) getShard(key string) *sync.RWMutex {
 	hash := quickhash.AesHash(key)
 	return sg.shards[hash%2048]
