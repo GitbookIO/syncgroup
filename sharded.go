@@ -51,6 +51,6 @@ func (sg *ShardedMutexes) RLocker(key string) *sync.RWMutex {
 }
 
 func (sg *ShardedMutexes) getShard(key string) *sync.RWMutex {
-	hash := quickhash.AesHash(key)
+	hash := quickhash.StrHash(key)
 	return sg.shards[hash%2048]
 }
