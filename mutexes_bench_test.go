@@ -24,6 +24,15 @@ func BenchmarkGroupLockUnlock(b *testing.B) {
 	}
 }
 
+func BenchmarkShardedLockUnlock(b *testing.B) {
+	rw := NewShardedMutexes()
+	lock := rw.Locker("a")
+	for n := 0; n < b.N; n++ {
+		lock.Lock()
+		lock.Unlock()
+	}
+}
+
 func BenchmarkReadGoLockUnlock(b *testing.B) {
 	rw := sync.RWMutex{}
 	for n := 0; n < b.N; n++ {
@@ -40,54 +49,91 @@ func BenchmarkReadGroupLockUnlock(b *testing.B) {
 	}
 }
 
-// BenchmarkGroupMutexes
-// Runs 100 go-routines read locking/unlocing on a single key (at a time)of a group mutex
-func BenchmarkGroupMutexes(b *testing.B) {
-	M := 100
-
-	locks := NewMutexGroup()
-	wg := sync.WaitGroup{}
-
-	for i := 0; i < b.N; i++ {
-		key := strconv.Itoa(i)
-		for j := 0; j < M; j++ {
-			wg.Add(1)
-			// Lock, sleep
-			go func(key string) {
-				locks.RLock(key)
-				//time.Sleep(1 * time.Millisecond)
-				locks.RUnlock(key)
-				wg.Done()
-			}(key)
-		}
-
-		// Wait for all to finish
-		wg.Wait()
+func BenchmarkReadShardedLockUnlock(b *testing.B) {
+	rw := NewShardedMutexes()
+	lock := rw.RLocker("a")
+	for n := 0; n < b.N; n++ {
+		lock.RLock()
+		lock.RUnlock()
 	}
 }
 
-// BenchmarkEmptyParallel
+// BenchmarkParallelGroup
+// Runs 100 go-routines read locking/unlocing on a single key (at a time)of a group mutex
+func BenchmarkParallelGroup(b *testing.B) {
+	M := 4096
+	b.SetParallelism(M)
+
+	locks := NewMutexGroup()
+	keys := nkeys(M)
+
+	b.RunParallel(func(pb *testing.PB) {
+		j := 0
+		for pb.Next() {
+			y := j
+			j++
+			key := keys[y%M]
+			// Lock, sleep
+			locks.Lock(key)
+			//time.Sleep(1 * time.Millisecond)
+			locks.Unlock(key)
+		}
+	})
+}
+
+// BenchmarkParallelSharded
+// Runs 100 go-routines read locking/unlocing on a single key (at a time) of a Sharded mutex
+func BenchmarkParallelSharded(b *testing.B) {
+	M := 4096
+	b.SetParallelism(M)
+
+	locks := NewShardedMutexes()
+	keys := nkeys(M)
+
+	b.RunParallel(func(pb *testing.PB) {
+		j := 0
+		for pb.Next() {
+			y := j
+			j++
+			key := keys[y%M]
+			lock := locks.Locker(key)
+			// Lock, sleep
+			lock.Lock()
+			//time.Sleep(1 * time.Millisecond)
+			lock.Unlock()
+		}
+	})
+}
+
+// BenchmarkParallelSingle
 // Runs 100 go-routines read locking/unlocing on a single mutex
-func BenchmarkEmptyParallel(b *testing.B) {
-	M := 100
+func BenchmarkParallelSingle(b *testing.B) {
+	M := 4096
+	b.SetParallelism(M)
 
 	lock := sync.RWMutex{}
-	wg := sync.WaitGroup{}
+	keys := nkeys(M)
 
-	for i := 0; i < b.N; i++ {
-		key := strconv.Itoa(i)
-		for j := 0; j < M; j++ {
-			wg.Add(1)
+	b.RunParallel(func(pb *testing.PB) {
+		j := 0
+		for pb.Next() {
+			y := j
+			j++
+			_ = keys[y%M]
 			// Lock, sleep
-			go func(key string) {
-				lock.RLock()
-				//time.Sleep(1 * time.Millisecond)
-				lock.RUnlock()
-				wg.Done()
-			}(key)
+			lock.Lock()
+			//time.Sleep(1 * time.Millisecond)
+			lock.Unlock()
 		}
+	})
+}
 
-		// Wait for all to finish
-		wg.Wait()
+func nkeys(n int) []string {
+	strs := make([]string, n)
+
+	for idx, _ := range strs {
+		strs[idx] = strconv.Itoa(idx)
 	}
+
+	return strs
 }
