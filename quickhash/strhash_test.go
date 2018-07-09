@@ -1,7 +1,6 @@
 package quickhash
 
 import (
-	"hash/fnv"
 	"unsafe"
 
 	"testing"
@@ -32,29 +31,46 @@ func TestStrHash(t *testing.T) {
 	}
 }
 
+func TestStrVSByte(t *testing.T) {
+	keys := []string{
+		"a",
+		"abc",
+		"123456",
+		"blablabla",
+	}
+
+	for _, k := range keys {
+		h1 := AesHash(k)
+		h2 := AesByteHash([]byte(k))
+		if h1 != h2 {
+			t.Errorf("Expected str & byte hashes to be equal got: %d vs %d", h1, h2)
+		}
+	}
+}
+
 func BenchmarkStrHash(b *testing.B) {
-	x0 := "a"
+	x0 := "abcdefghijklmnopqrstuvwxyz"
 	for n := 0; n < b.N; n++ {
 		StrHash(x0)
 	}
 }
 
 func BenchmarkAesHash(b *testing.B) {
-	x0 := "a"
+	x0 := "abcdefghijklmnopqrstuvwxyz"
 	for n := 0; n < b.N; n++ {
 		AesHash(x0)
 	}
 }
 
 func BenchmarkFnvHash(b *testing.B) {
-	x0 := "a"
+	x0 := "abcdefghijklmnopqrstuvwxyz"
 	for n := 0; n < b.N; n++ {
 		FnvStr(x0)
 	}
 }
 
 func BenchmarkMapHash(b *testing.B) {
-	key := "abcdef"
+	key := "abcdefghijklmnopqrstuvwxyz"
 	t := map[string]int64{
 		key: 99,
 	}
@@ -64,7 +80,5 @@ func BenchmarkMapHash(b *testing.B) {
 }
 
 func FnvStr(str string) uint64 {
-	h := fnv.New64a()
-	h.Write([]byte(str))
-	return h.Sum64()
+	return Fnv64a([]byte(str))
 }
