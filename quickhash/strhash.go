@@ -19,11 +19,22 @@ func aeshashstr(p unsafe.Pointer, h uintptr) uintptr
 
 func StrHash(str string) uint64 {
 	if useAeshash {
-		return uint64(aeshashstr(unsafe.Pointer(&str), 44))
+		return uint64(aeshashstr(unsafe.Pointer(&str), 0))
 	}
-	return uint64(strhash(unsafe.Pointer(&str), 44))
+	return uint64(strhash(unsafe.Pointer(&str), 0))
 }
 
 func AesHash(str string) uint64 {
-	return uint64(aeshashstr(unsafe.Pointer(&str), 44))
+	return uint64(aeshashstr(unsafe.Pointer(&str), 0))
+}
+
+func ByteHash(data []byte) uint64 {
+	if useAeshash {
+		return uint64(aeshashstr(unsafe.Pointer(&data), 0))
+	}
+	return uint64(strhash(unsafe.Pointer(&data), 0))
+}
+
+func AesByteHash(data []byte) uint64 {
+	return uint64(aeshashstr(unsafe.Pointer(&data), 0))
 }
