@@ -40,8 +40,8 @@ func TestStrVSByte(t *testing.T) {
 	}
 
 	for _, k := range keys {
-		h1 := AesHash(k)
-		h2 := AesByteHash([]byte(k))
+		h1 := StrHash(k)
+		h2 := ByteHash([]byte(k))
 		if h1 != h2 {
 			t.Errorf("Expected str & byte hashes to be equal got: %d vs %d", h1, h2)
 		}
@@ -58,7 +58,7 @@ func BenchmarkStrHash(b *testing.B) {
 func BenchmarkAesHash(b *testing.B) {
 	x0 := "abcdefghijklmnopqrstuvwxyz"
 	for n := 0; n < b.N; n++ {
-		AesHash(x0)
+		StrHash(x0)
 	}
 }
 
