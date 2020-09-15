@@ -1,40 +1,40 @@
 package quickhash
 
 import (
+	"reflect"
 	_ "runtime"
 	"unsafe" // required to use //go:linkname
 )
 
-//go:noescape
-//go:linkname useAeshash runtime.useAeshash
-var useAeshash bool
+// Fixed seed for deterministic outcomes
+const shSeed uint64 = 42
 
-//go:noescape
-//go:linkname strhash runtime.strhash
-func strhash(a unsafe.Pointer, h uintptr) uintptr
-
-//go:noescape
-//go:linkname aeshashstr runtime.aeshashstr
-func aeshashstr(p unsafe.Pointer, h uintptr) uintptr
-
-func StrHash(str string) uint64 {
-	if useAeshash {
-		return uint64(aeshashstr(unsafe.Pointer(&str), 0))
+// Modified from runtime/alg.go
+func rthash(ptr unsafe.Pointer, size int, seed uint64) uint64 {
+	if size == 0 {
+		return seed
 	}
-	return uint64(strhash(unsafe.Pointer(&str), 0))
+	// The runtime hasher only works on uintptr. For 64-bit
+	// architectures, we use the hasher directly. Otherwise,
+	// we use two parallel hashers on the lower and upper 32 bits.
+	if unsafe.Sizeof(uintptr(0)) == 8 {
+		return uint64(runtime_memhash(ptr, uintptr(seed), uintptr(size)))
+	}
+	lo := runtime_memhash(ptr, uintptr(seed), uintptr(size))
+	hi := runtime_memhash(ptr, uintptr(seed>>32), uintptr(size))
+	return uint64(hi)<<32 | uint64(lo)
 }
 
-func AesHash(str string) uint64 {
-	return uint64(aeshashstr(unsafe.Pointer(&str), 0))
+//go:linkname runtime_memhash runtime.memhash
+//go:noescape
+func runtime_memhash(p unsafe.Pointer, seed, s uintptr) uintptr
+
+func StrHash(str string) uint64 {
+	hdr := (*reflect.StringHeader)(unsafe.Pointer(&str))
+	ptr := unsafe.Pointer(hdr.Data)
+	return uint64(rthash(ptr, len(str), shSeed))
 }
 
 func ByteHash(data []byte) uint64 {
-	if useAeshash {
-		return uint64(aeshashstr(unsafe.Pointer(&data), 0))
-	}
-	return uint64(strhash(unsafe.Pointer(&data), 0))
-}
-
-func AesByteHash(data []byte) uint64 {
-	return uint64(aeshashstr(unsafe.Pointer(&data), 0))
+	return uint64(rthash(unsafe.Pointer(&data[0]), len(data), shSeed))
 }
