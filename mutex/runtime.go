@@ -4,7 +4,6 @@ import (
 	"unsafe"
 )
 
-//go:noescape
 //go:linkname race_Enabled internal.race.Enabled
 var race_Enabled bool
 
